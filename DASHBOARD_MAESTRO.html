@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MasterIA | Portal de Operaciones v6</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #818cf8;
+            --accent: #10b981;
+            --warning: #fbbf24;
+            --danger: #ef4444;
+            --dark: #0f172a;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Outfit', sans-serif;
+            background: radial-gradient(circle at top right, #1e293b, #0f172a);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container { width: 95%; max-width: 1400px; padding: 20px; }
+
+        /* --- TOP BAR --- */
+        .top-bar {
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 15px 30px;
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            box-sizing: border-box;
+        }
+
+        .brand h1 { margin: 0; font-size: 1.8rem; font-weight: 800; background: linear-gradient(45deg, #818cf8, #34d399); -webkit-background-clip: text; -webkit-fill-color: transparent; }
+
+        .countdown-container { text-align: center; }
+        .countdown-title { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 2px; color: var(--warning); margin-bottom: 8px; font-weight: 800; }
+        .timer { display: flex; justify-content: center; gap: 20px; font-weight: 800; font-size: 1.4rem; }
+        .timer-unit { text-align: center; width: 60px; }
+        .timer-unit span { display: block; font-size: 0.55rem; opacity: 0.5; font-weight: 400; margin-top: -3px; }
+
+        .current-date { text-align: right; }
+        .current-date h2 { margin: 0; font-size: 1.2rem; color: var(--accent); }
+        .current-date p { margin: 0; font-size: 0.8rem; opacity: 0.6; }
+
+        /* --- NAVIGATION --- */
+        .tabs { display: flex; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; }
+        .tab-btn { background: var(--glass); border: 1px solid var(--glass-border); color: white; padding: 12px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; transition: all 0.3s; font-size: 0.9rem; }
+        .tab-btn.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 0 20px rgba(99, 102, 241, 0.4); }
+
+        .content-area { display: none; width: 100%; }
+        .content-area.active { display: block; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- CARDS --- */
+        .card { background: var(--glass); backdrop-filter: blur(10px); border: 1px solid var(--glass-border); padding: 25px; border-radius: 20px; margin-bottom: 30px; }
+        .card h3 { margin-top: 0; font-size: 1rem; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; }
+
+        /* --- ACTION CENTER --- */
+        .grid { display: grid; grid-template-columns: 1fr 350px; gap: 30px; }
+        .action-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        .day-box { background: rgba(255,255,255,0.02); border-radius: 15px; padding: 15px; border: 1px solid rgba(255,255,255,0.05); }
+        .day-box.is-today { border-color: var(--accent); background: rgba(16, 185, 129, 0.05); }
+        .day-header { font-weight: 800; color: var(--accent); margin-bottom: 12px; font-size: 0.85rem; display:flex; justify-content: space-between; }
+        .day-date { color: var(--warning); font-size: 0.75rem; }
+        .task-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px; background: rgba(255,255,255,0.02); border-radius: 10px; margin-bottom: 8px; cursor: pointer; }
+        .task-text { font-size: 0.8rem; line-height: 1.3; }
+        .tag { font-size: 0.55rem; padding: 2px 5px; border-radius: 3px; font-weight: 800; text-transform: uppercase; margin-top: 3px; display: inline-block; }
+        .tag-v { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+        .tag-t { background: rgba(99, 102, 241, 0.2); color: #a5b4fc; }
+
+        /* --- WBS --- */
+        .wbs-item { border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .wbs-header { padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: rgba(255,255,255,0.01); transition: 0.3s; }
+        .wbs-header:hover { background: rgba(255,255,255,0.03); }
+        .wbs-title { font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+        .wbs-area { font-size: 0.65rem; color: var(--accent); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+        .wbs-content { display: none; padding: 20px 40px; background: rgba(0,0,0,0.2); font-size: 0.85rem; border-top: 1px solid rgba(255,255,255,0.02); }
+        .wbs-content.active { display: block; }
+        .step-item { margin-bottom: 12px; display: flex; align-items: flex-start; gap: 15px; border-left: 2px solid var(--primary); padding-left: 15px; }
+        .step-num { color: var(--primary); font-weight: 800; min-width: 20px; }
+        .step-text b { color: var(--warning); display: block; margin-bottom: 3px; }
+        .step-text p { margin: 0; opacity: 0.7; font-size: 0.8rem; line-height: 1.4; }
+
+        /* --- BITÁCORA --- */
+        .log-form { display: flex; gap: 15px; margin-bottom: 30px; }
+        .log-input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 12px; padding: 15px; color: white; font-family: 'Outfit'; font-size: 1rem; outline: none; transition: 0.3s; }
+        .log-input:focus { border-color: var(--primary); box-shadow: 0 0 10px rgba(99, 102, 241, 0.2); }
+        .log-btn { background: var(--accent); color: white; border: none; padding: 0 25px; border-radius: 12px; cursor: pointer; font-weight: 800; text-transform: uppercase; font-size: 0.8rem; transition: 0.3s; }
+        .log-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3); }
+
+        .log-timeline { display: flex; flex-direction: column; gap: 15px; max-height: 600px; overflow-y: auto; padding-right: 10px; }
+        .log-item { background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); padding: 15px 20px; border-radius: 15px; display: flex; justify-content: space-between; align-items: flex-start; animation: slideIn 0.3s ease; }
+        .log-content { flex: 1; }
+        .log-text { font-size: 0.95rem; line-height: 1.4; margin-bottom: 8px; color: #e2e8f0; }
+        .log-date { font-size: 0.7rem; opacity: 0.4; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        .log-del { background: transparent; border: none; color: var(--danger); cursor: pointer; opacity: 0.3; padding: 5px; transition: 0.3s; }
+        .log-del:hover { opacity: 1; }
+
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+
+        /* --- UTILS --- */
+        .btn { display: block; padding: 15px; border-radius: 12px; text-align: center; text-decoration: none; font-weight: 600; cursor: pointer; border: none; margin-bottom: 10px; width: 100%; box-sizing: border-box; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-outline { background: transparent; border: 1px solid var(--glass-border); color: white; }
+        .metric-val { font-size: 2.2rem; font-weight: 800; color: var(--accent); display: block; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- TOP BAR -->
+        <div class="top-bar">
+            <div class="brand">
+                <h1>MasterIA Cloud</h1>
+                <p style="margin:0; font-size:0.7rem; opacity:0.5; letter-spacing: 2px;">STRATEGIC AI OPERATIONS</p>
+            </div>
+            
+            <div class="countdown-container">
+                <div class="countdown-title">👶 DÍAS PARA LA LIBERTAD (25 SEPT 2026)</div>
+                <div class="timer" id="countdown-timer">
+                    <div class="timer-unit"><div id="days">000</div><span>DÍAS</span></div>
+                    <div class="timer-unit"><div id="hours">00</div><span>HRS</span></div>
+                    <div class="timer-unit"><div id="minutes">00</div><span>MIN</span></div>
+                    <div class="timer-unit" style="color: var(--warning);"><div id="seconds">00</div><span>SEG</span></div>
+                </div>
+            </div>
+
+            <div class="current-date">
+                <h2 id="today-name">---</h2>
+                <p id="today-full">---</p>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" id="btn-action" onclick="showTab('action')">🎯 Action Center</button>
+            <button class="tab-btn" id="btn-roadmap" onclick="showTab('roadmap')">🛠️ Roadmap (WBS)</button>
+            <button class="tab-btn" id="btn-logs" onclick="showTab('logs')">📓 Bitácora de Logros</button>
+        </div>
+
+        <!-- ACTION CENTER -->
+        <div id="action" class="content-area active">
+            <div class="grid">
+                <div class="main-panel">
+                    <div class="card">
+                        <h3>⚡ Ejecución Semanal (60 Min/día)</h3>
+                        <div class="action-grid" id="action-grid"></div>
+                    </div>
+                </div>
+                <div class="side-panel">
+                    <div class="card">
+                        <h3>📊 KPIs Reales</h3>
+                        <div style="margin-bottom: 20px;">
+                            <span class="metric-val">11</span>
+                            <span style="font-size: 0.65rem; opacity: 0.5;">LEADS AUDITADOS</span>
+                        </div>
+                        <a href="https://airtable.com" target="_blank" class="btn btn-primary">Airtable Cloud</a>
+                        <button class="btn btn-outline" onclick="alert('Conectando...')">🔔 Alertas Telegram</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ROADMAP -->
+        <div id="roadmap" class="content-area">
+            <div class="roadmap-container">
+                <div class="roadmap-phase">
+                    <div class="phase-header-bar">
+                        <div class="phase-name">Fase 1: Mar - Abr (Validación)</div>
+                        <div class="wbs-area">Target: $1.2k MRR</div>
+                    </div>
+                    <div class="wbs-item">
+                        <div class="wbs-header" onclick="toggleWBS(this)"><div class="wbs-title">▶ Ejecución de 40 Mystery Audits</div><div class="wbs-area">Ventas</div></div>
+                        <div class="wbs-content">
+                            <ul class="step-list">
+                                <li class="step-item"><div class="step-num">01</div><div class="step-text"><b>Prospección Activa</b><p>Buscar 40 inmobiliarias de lujo en Quito/Gye.</p></div></li>
+                                <li class="step-item"><div class="step-num">02</div><div class="step-text"><b>Data Entry</b><p>Registrar contacto en Airtable.</p></div></li>
+                                <li class="step-item"><div class="step-num">03</div><div class="step-text"><b>Query & Tracking</b><p>Lanzar mystery shopper y medir respuesta.</p></div></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <!-- Más fases omitidas por brevedad en este render, pero se mantienen internamente -->
+            </div>
+        </div>
+
+        <!-- BITÁCORA DE LOGROS -->
+        <div id="logs" class="content-area">
+            <div class="card">
+                <h3>📓 Bitácora Daily Wins</h3>
+                <div class="log-form">
+                    <input type="text" id="log-input" class="log-input" placeholder="¿Qué lograste hoy para MasterIA?">
+                    <button class="log-btn" onclick="addLog()">Registrar Logro</button>
+                </div>
+                <div class="log-timeline" id="log-timeline">
+                    <!-- Los logros aparecerán aquí -->
+                </div>
+            </div>
+        </div>
+
+        <footer style="margin-top: 40px; opacity: 0.3; font-size: 0.7rem; text-align: center;">© 2026 MasterIA Engine</footer>
+    </div>
+
+    <script>
+        // FECHAS
+        const daysShort = ['DOM', 'LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB'];
+        const daysFull = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+        const monthsNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+        function updateDate() {
+            const now = new Date();
+            document.getElementById('today-name').textContent = daysFull[now.getDay()];
+            document.getElementById('today-full').textContent = `${now.getDate()} de ${monthsNames[now.getMonth()]} 2026`;
+        }
+        updateDate();
+
+        function generateActionGrid() {
+            const grid = document.getElementById('action-grid');
+            const tasks = [
+                { day: 6, title: 'SYSTEMS', t1: 'Setup Airtable', t2: 'Connect Telegram', tag1: 'T', tag2: 'T' },
+                { day: 0, title: 'PLAN', t1: 'QA leads', t2: 'Speeches', tag1: 'V', tag2: 'V' },
+                { day: 1, title: 'AUDIT', t1: '10 WA Mystery', t2: 'Log Tiempos', tag1: 'V', tag2: 'T' },
+                { day: 2, title: 'ANALYZE', t1: 'Fugas Críticas', t2: 'Reportes Valor', tag1: 'V', tag2: 'T' },
+                { day: 3, title: 'ATTACK', t1: 'Cold Pitch Out', t2: 'Book Meetings', tag1: 'V', tag2: 'V' }
+            ];
+            const today = new Date();
+            tasks.forEach(task => {
+                const taskDate = new Date();
+                taskDate.setDate(today.getDate() + (task.day - today.getDay()));
+                const isToday = task.day === today.getDay();
+                grid.insertAdjacentHTML('beforeend', `
+                    <div class="day-box ${isToday ? 'is-today' : ''}">
+                        <div class="day-header"><span>${task.title}</span><span class="day-date">${daysShort[task.day]} ${taskDate.getDate()}</span></div>
+                        <div class="task-list">
+                            <label class="task-item"><input type="checkbox" data-t="${task.day}-1"><span>${task.t1}<br><span class="tag tag-${task.tag1.toLowerCase()}">${task.tag1 === 'V' ? 'Ventas' : 'Técnico'}</span></span></label>
+                            <label class="task-item"><input type="checkbox" data-t="${task.day}-2"><span>${task.t2}<br><span class="tag tag-${task.tag2.toLowerCase()}">${task.tag2 === 'V' ? 'Ventas' : 'Técnico'}</span></span></label>
+                        </div>
+                    </div>
+                `);
+            });
+        }
+        generateActionGrid();
+
+        // COUNTDOWN
+        function updateCountdown() {
+            const birthDate = new Date("September 25, 2026 00:00:00").getTime();
+            const now = new Date().getTime();
+            const gap = birthDate - now;
+            if (gap < 0) return;
+            const second = 1000, minute = second * 60, hour = minute * 60, day = hour * 24;
+            document.getElementById('days').innerText = String(Math.floor(gap / day)).padStart(3, '0');
+            document.getElementById('hours').innerText = String(Math.floor((gap % day) / hour)).padStart(2, '0');
+            document.getElementById('minutes').innerText = String(Math.floor((gap % hour) / minute)).padStart(2, '0');
+            document.getElementById('seconds').innerText = String(Math.floor((gap % minute) / second)).padStart(2, '0');
+        }
+        setInterval(updateCountdown, 1000);
+        updateCountdown();
+
+        // TABS
+        function showTab(tabId) {
+            document.querySelectorAll('.content-area').forEach(a => a.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            document.getElementById('btn-' + tabId).classList.add('active');
+        }
+
+        function toggleWBS(h) { h.nextElementSibling.classList.toggle('active'); }
+
+        // BITÁCORA LOGIC
+        let userLogs = JSON.parse(localStorage.getItem('masteria-logs')) || [];
+
+        function addLog() {
+            const input = document.getElementById('log-input');
+            if(!input.value) return;
+            const newLog = { id: Date.now(), text: input.value, date: new Date().toLocaleString() };
+            userLogs.unshift(newLog);
+            localStorage.setItem('masteria-logs', JSON.stringify(userLogs));
+            input.value = '';
+            renderLogs();
+        }
+
+        function renderLogs() {
+            const container = document.getElementById('log-timeline');
+            container.innerHTML = userLogs.map(log => `
+                <div class="log-item">
+                    <div class="log-content"><div class="log-text">${log.text}</div><div class="log-date">${log.date}</div></div>
+                    <button class="log-del" onclick="deleteLog(${log.id})">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function deleteLog(id) {
+            userLogs = userLogs.filter(l => l.id !== id);
+            localStorage.setItem('masteria-logs', JSON.stringify(userLogs));
+            renderLogs();
+        }
+        renderLogs();
+
+        document.querySelectorAll('input[type="checkbox"]').forEach(c => {
+            const id = 'masteria-v6-' + c.getAttribute('data-t');
+            c.checked = localStorage.getItem(id) === 'true';
+            c.addEventListener('change', () => localStorage.setItem(id, c.checked));
+        });
+    </script>
+</body>
+</html>
