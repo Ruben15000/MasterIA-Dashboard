@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MasterIA | Sistema Operativo de Ejecución</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1; --secondary: #818cf8; --accent: #10b981; --warning: #fbbf24;
+            --danger: #ef4444; --dark: #0f172a; --glass: rgba(255, 255, 255, 0.03); --glass-border: rgba(255, 255, 255, 0.1);
+        }
+        body { font-family: 'Outfit', sans-serif; background: radial-gradient(circle at top right, #1e1b4b, #0f172a); color: white; margin: 0; min-height: 100vh; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 20px; background: var(--glass); backdrop-filter: blur(10px); border: 1px solid var(--glass-border); border-radius: 20px; margin-bottom: 30px; }
+        .timer { display: flex; gap: 15px; font-size: 1.5rem; font-weight: 800; }
+        .timer span { display: flex; flex-direction: column; align-items: center; }
+        .timer label { font-size: 0.6rem; color: rgba(255,255,255,0.5); text-transform: uppercase; }
+        .sync-status { font-size: 0.7rem; padding: 6px 12px; border-radius: 50px; background: rgba(16, 185, 129, 0.1); color: var(--accent); font-weight: 800; border: 1px solid var(--accent); }
+        .tabs { display: flex; gap: 10px; margin-bottom: 30px; }
+        .tab-btn { background: var(--glass); border: 1px solid var(--glass-border); color: white; padding: 12px 25px; border-radius: 50px; cursor: pointer; font-weight: 600; transition: 0.3s; }
+        .tab-btn.active { background: var(--primary); box-shadow: 0 0 20px rgba(99, 102, 241, 0.4); }
+        .view-section { display: none; } .view-section.active { display: block; }
+        .card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 24px; padding: 25px; margin-bottom: 25px; }
+        .card-title { color: var(--secondary); font-size: 1.2rem; font-weight: 800; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;}
+        .week-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        .day-box { background: rgba(255, 255, 255, 0.05); border-radius: 18px; padding: 20px; border: 1px solid var(--glass-border); min-height: 150px; }
+        .day-box.today { border-color: var(--accent); background: rgba(16, 185, 129, 0.05); box-shadow: 0 0 15px rgba(16, 185, 129, 0.1); }
+        .day-label { font-weight: 800; color: var(--accent); font-size: 0.8rem; margin-bottom: 15px; display: block; text-transform: uppercase;}
+        .task-item { display: flex; align-items: start; gap: 10px; margin-bottom: 12px; padding: 10px; border-radius: 10px; background: rgba(255,255,255,0.02); border: 1px solid transparent; transition: 0.2s; }
+        .task-item:hover { border-color: var(--glass-border); background: rgba(255,255,255,0.05); }
+        .task-item input { width: 18px; height: 18px; margin-top: 2px; }
+        .task-name { font-size: 0.85rem; line-height: 1.3; }
+        .tag { font-size: 0.6rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; text-transform: uppercase; margin-top: 5px; display: inline-block; }
+        .tag-sales { background: rgba(248, 113, 113, 0.2); color: #f87171; }
+        .tag-tech { background: rgba(99, 102, 241, 0.2); color: #818cf8; }
+        .tag-strategy { background: rgba(251, 191, 36, 0.2); color: #fbbf24; }
+        .btn-refresh { background: var(--primary); color: white; border: none; padding: 8px 15px; border-radius: 10px; font-size: 0.8rem; font-weight: 800; cursor: pointer; }
+        
+        /* Roadmap */
+        .fase-block { border: 1px solid var(--glass-border); border-radius: 15px; margin-bottom: 15px; overflow: hidden; background: rgba(0,0,0,0.2); }
+        .fase-header { padding: 15px 20px; background: rgba(255,255,255,0.05); cursor: pointer; display: flex; justify-content: space-between; font-weight: 800; }
+        .fase-content { padding: 20px; display: none; }
+        .fase-block.active .fase-content { display: block; }
+
+        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        .spinner { border: 4px solid rgba(255,255,255,0.1); border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+<div id="loader"><div class="spinner"></div></div>
+<div class="container">
+    <div class="header">
+        <div><h1 style="margin:0; font-size: 1.5rem;">MasterIA <span style="font-weight:300; opacity:0.5;">Command Center</span></h1></div>
+        <div class="timer" id="countdown"></div>
+        <div id="sync-indicator" class="sync-status">CONECTADO</div>
+    </div>
+    
+    <div class="tabs">
+        <button class="tab-btn active" onclick="showTab('action')">🎯 Action Center</button>
+        <button class="tab-btn" onclick="showTab('roadmap')">🏗️ Roadmap Maestro</button>
+        <button class="tab-btn" onclick="showTab('bitacora')">📓 Bitácora</button>
+    </div>
+
+    <!-- ACTION CENTER (Default) -->
+    <div id="view-action" class="view-section active">
+        <div class="card">
+            <div class="card-title">RUTA DE EJECUCIÓN SEMANA 1 <button class="btn-refresh" onclick="loadTasks()">Sincronizar Airtable</button></div>
+            <div id="tasks-container" class="week-grid"></div>
+        </div>
+    </div>
+
+    <!-- ROADMAP -->
+    <div id="view-roadmap" class="view-section">
+        <div class="card">
+            <div class="card-title">ESTRATEGIA $15K MRR</div>
+            <div class="fase-block active">
+                <div class="fase-header" onclick="this.parentElement.classList.toggle('active')"><span>01</span> FASE 1: Validación (Audit & Sales) ▼</div>
+                <div class="fase-content"><p>• 10-20 Mystery Audits inmobiliarios.<br>• Identificación de fugas de dinero reales.<br>• Cierre de 1er piloto pagado.</p></div>
+            </div>
+            <div class="fase-block">
+                <div class="fase-header" onclick="this.parentElement.classList.toggle('active')"><span>02</span> FASE 2: Tracción (Growth) ▼</div>
+                <div class="fase-content"><p>• Omni-channel bot integration.<br>• Marketing de autoridad en LinkedIn.</p></div>
+            </div>
+            <div class="fase-block">
+                <div class="fase-header" onclick="this.parentElement.classList.toggle('active')"><span>03</span> FASE 3: Escalado (System) ▼</div>
+                <div class="fase-content"><p>• Dashboards automáticos para clientes.<br>• Equipo de soporte especializado.</p></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-bitacora" class="view-section">
+        <div class="card"><div class="card-title">BITÁCORA DE LOGROS</div><div id="log-timeline"></div></div>
+    </div>
+</div>
+
+<script>
+    const AT_TOKEN = "patCxKXg3L8GJoIlA.d410b16e850b7b03e2eae06170244c0d092da7dd760f0ec9647696a9cb527a9c";
+    const AT_BASE = "appAKGZbXyhVpVclW";
+
+    async function airtableRequest(table) {
+        const response = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${table}`, {
+            headers: { 'Authorization': `Bearer ${AT_TOKEN}` }
+        });
+        return await response.json();
+    }
+
+    async function loadTasks() {
+        showSync(true);
+        const data = await airtableRequest('Tasks');
+        const container = document.getElementById('tasks-container');
+        const days = ['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'];
+        const today = getDayName();
+        
+        container.innerHTML = days.map(day => `
+            <div class="day-box ${day === today ? 'today' : ''}">
+                <span class="day-label">${day === today ? 'HOY' : day.toUpperCase()}</span>
+                <div id="t-${day}"></div>
+            </div>
+        `).join('');
+
+        if (data.records) {
+            data.records.forEach(r => {
+                const t = r.fields;
+                const el = `
+                    <div class="task-item">
+                        <input type="checkbox" ${t.Done ? 'checked' : ''} disabled>
+                        <div class="task-name">
+                            ${t.Name}
+                            <br><span class="tag tag-${t.Area.toLowerCase()}">${t.Area}</span>
+                        </div>
+                    </div>
+                `;
+                const div = document.getElementById(`t-${t.Day}`);
+                if (div) div.innerHTML += el;
+            });
+        }
+        showSync(false);
+    }
+
+    async function loadLogs() {
+        const data = await airtableRequest('Bitacora');
+        const container = document.getElementById('log-timeline');
+        if (data.records) {
+            const sorted = data.records.sort((a,b) => new Date(b.fields.Fecha) - new Date(a.fields.Fecha));
+            container.innerHTML = sorted.map(r => `
+                <div style="background:rgba(255,255,255,0.02); padding:15px; border-radius:15px; margin-bottom:12px; border-left:4px solid var(--accent);">
+                    <div style="font-size:0.7rem; color:var(--warning); font-weight:800;">${new Date(r.fields.Fecha).toLocaleString()}</div>
+                    <div style="font-size:0.9rem;">${r.fields.Logro}</div>
+                </div>
+            `).join('');
+        }
+    }
+
+    function getDayName() {
+        const d = new Date().getDay();
+        return [ 'Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab'][d];
+    }
+
+    function showTab(id) {
+        document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('view-' + id).classList.add('active');
+        event.currentTarget.classList.add('active');
+    }
+
+    function showSync(status) {
+        const ind = document.getElementById('sync-indicator');
+        ind.innerText = status ? 'SINCRONIZANDO...' : 'SISTEMA CONECTADO';
+        ind.style.borderColor = status ? 'var(--warning)' : 'var(--accent)';
+        ind.style.color = status ? 'var(--warning)' : 'var(--accent)';
+    }
+
+    window.onload = async () => {
+        const target = new Date("September 25, 2026 00:00:00").getTime();
+        setInterval(() => {
+            const now = new Date().getTime();
+            const diff = target - now;
+            const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            document.getElementById("countdown").innerHTML = `<span>${d}<label>Días</label></span><span>${h}<label>Hrs</label></span>`;
+        }, 1000);
+        await Promise.all([loadTasks(), loadLogs()]);
+        document.getElementById('loader').style.display = 'none';
+    }
+</script>
+</body>
+</html>
